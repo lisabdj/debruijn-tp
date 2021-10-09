@@ -18,6 +18,7 @@ import os
 import sys
 import networkx as nx
 import matplotlib
+import matplotlib.pyplot as plt
 from operator import itemgetter
 import random
 random.seed(9001)
@@ -68,20 +69,42 @@ def get_arguments():
 
 
 def read_fastq(fastq_file):
-    pass
+    with open(fastq_file, "r") as filin:
+        ligne=filin.readline()
+        while ligne != "":
+            while ligne[0]== "@":
+                ligne = filin.readline()
+                yield ligne
+                break
+            ligne = filin.readline()
+    
 
 
 def cut_kmer(read, kmer_size):
-    pass
+    for i in range(len(read)-kmer_size):
+        yield read[i:i+kmer_size]
+    
 
 
 def build_kmer_dict(fastq_file, kmer_size):
-    pass
+    sequences=read_fastq(fastq_file)
+    list_kmer = []
+    for seq in sequences:
+        kmers = cut_kmer(seq, kmer_size)
+        for kmer in kmers:
+            list_kmer.append(kmer)
+    dico_kmer = dict((x, list_kmer.count(x)) for x in set(list_kmer))
+    return(dico_kmer)
+
 
 
 def build_graph(kmer_dict):
-    pass
+    G = nx.DiGraph()
+    for kmer,weight in kmer_dict.items():
+        G.add_edge(kmer[0:-1], kmer[1:], weight=weight)
+    return(G)
 
+    
 
 def remove_paths(graph, path_list, delete_entry_node, delete_sink_node):
     pass
@@ -162,7 +185,13 @@ def main():
     """
     # Get arguments
     args = get_arguments()
-
+    fastq_file = "/home/sdv/m2bi/lbouarroudj/Documents/Assemblage/debruijn-tp/data/eva71_two_reads.fq"
+    #sequence=read_fastq(fastq_file)
+    #for seq in sequence:
+    #    print(seq)
+    dico = build_kmer_dict(fastq_file, 2)
+    graph = build_graph(dico)
+    draw_graph(graph, "graph.png")
     # Fonctions de dessin du graphe
     # A decommenter si vous souhaitez visualiser un petit 
     # graphe
