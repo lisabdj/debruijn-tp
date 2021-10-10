@@ -26,7 +26,7 @@ from random import randint
 import statistics
 
 __author__ = "BOUARROUDJ Lisa"
-__copyright__ = "Universite Paris Diderot"
+__copyright__ = "Boudjii Corporation"
 __credits__ = ["BOUARROUDJ Lisa"]
 __license__ = "GPL"
 __version__ = "1.0.0"
@@ -69,6 +69,12 @@ def get_arguments():
 
 
 def read_fastq(fastq_file):
+    """
+      :Parameters:
+          xxx:
+      Returns:
+
+    """
     with open(fastq_file, "r") as filin:
         ligne=filin.readline()
         while ligne != "":
@@ -80,12 +86,24 @@ def read_fastq(fastq_file):
 
 
 def cut_kmer(read, kmer_size):
+    """
+      :Parameters:
+          xxx:
+      Returns:
+
+    """
     for i in range(len(read)-kmer_size+1):
         yield read[i:i+kmer_size]
 
 
 
 def build_kmer_dict(fastq_file, kmer_size):
+    """
+      :Parameters:
+          xxx:
+      Returns:
+
+    """
     sequences=read_fastq(fastq_file)
     list_kmer = []
     for seq in sequences:
@@ -98,6 +116,12 @@ def build_kmer_dict(fastq_file, kmer_size):
 
 
 def build_graph(kmer_dict):
+    """
+      :Parameters:
+          xxx:
+      Returns:
+
+    """
     G = nx.DiGraph()
     for kmer,weight in kmer_dict.items():
         G.add_edge(kmer[0:-1], kmer[1:], weight=weight)
@@ -106,32 +130,133 @@ def build_graph(kmer_dict):
 
 
 def remove_paths(graph, path_list, delete_entry_node, delete_sink_node):
-    pass
+    """
+      :Parameters:
+          xxx:
+      Returns:
+
+    """
+    for path in path_list:
+        if delete_entry_node is True and delete_sink_node is True:
+            graph.remove_nodes_from(path)
+        elif delete_entry_node is True:
+            graph.remove_nodes_from(path[:-1])
+        elif delete_sink_node is True:
+            graph.remove_nodes_from(path[1:])
+        else:
+            graph.remove_nodes_from(path[1:-1])
+    return graph
+
 
 def std(data):
-    pass
+    """
+      :Parameters:
+          xxx:
+      Returns:
+
+    """
+    std = statistics.stdev(data)
+    return std
 
 
 def select_best_path(graph, path_list, path_length, weight_avg_list,
                      delete_entry_node=False, delete_sink_node=False):
-    pass
+    """
+      :Parameters:
+          xxx:
+      Returns:
+
+    """
+    for i in range(len(path_list)):
+        for j in range(i, len(path_list)-1):
+            poids_1 = weight_avg_list[i]
+            poids_2 = weight_avg_list[j]
+            if std([poids_1, poids_2]) > 0:
+                if poids_1 > poids_2:
+                    graph.remove_paths(graph, path_list[j], delete_entry_node, delete_sink_node)
+                else:
+                    graph.remove_paths(graph, path_list[i], delete_entry_node, delete_sink_node)
+            if std([poids_1, poids_2]) == 0:
+                len_1 = path_length[i]
+                len_2 = path_length[j]
+                if std([len_1, len_2]) > 0:
+                    if len_1 > len_2:
+                        graph.remove_paths(graph, path_list[j], delete_entry_node, delete_sink_node)
+                    else:
+                        graph.remove_paths(graph, path_list[i], delete_entry_node, delete_sink_node)
+                elif std([len_1, len_2]) == 0:
+                    n = randint(i, j)
+                    graph.remove_paths(graph, path_list[n], delete_entry_node, delete_sink_node)
+    return graph
 
 def path_average_weight(graph, path):
-    pass
+    """
+      :Parameters:
+          xxx:
+      Returns:
+
+    """
+    poids = 0
+    for noeud_1, noeud_2 in zip(path[:-1], path[1:]):
+        poids = poids + graph[noeud_1][noeud_2]["weight"]
+    poids_moyen = poids / (len(path)-1)
+    return poids_moyen
 
 def solve_bubble(graph, ancestor_node, descendant_node):
-    pass
+    """
+      :Parameters:
+          xxx:
+      Returns:
+
+    """
+    path_list = list(nx.all_simple_paths(graph, ancestor_node, descendant_node))
+    path_length = []
+    weight_avg_list = []
+    for path in path_list:
+        path_length.append(len(path))
+        weight_avg_list.append(path_average_weight(graph, path))
+    return select_best_path(graph, path_list, path_length, weight_avg_list)
 
 def simplify_bubbles(graph):
-    pass
+    """
+      :Parameters:
+          xxx:
+      Returns:
+
+    """
+    bubble = False
+    for noeud in graph.nodes():
+        if noeud in graph.nodes():
+            liste_prede = list(graph.predecessors(noeud))
+            #if len(liste_prede) > 1:
+    return graph
+
 
 def solve_entry_tips(graph, starting_nodes):
+    """
+      :Parameters:
+          xxx:
+      Returns:
+
+    """
     pass
 
 def solve_out_tips(graph, ending_nodes):
+    """
+      :Parameters:
+          xxx:
+      Returns:
+
+    """
     pass
 
 def get_starting_nodes(graph):
+    """
+      :Parameters:
+          xxx:
+      Returns:
+
+    """
     noeuds_entree = []
     for noeud in graph.nodes():
         if not list(graph.predecessors(noeud)):
@@ -139,6 +264,12 @@ def get_starting_nodes(graph):
     return noeuds_entree
 
 def get_sink_nodes(graph):
+    """
+      :Parameters:
+          xxx:
+      Returns:
+
+    """
     noeuds_sortie = []
     for noeud in graph.nodes():
         if not list(graph.successors(noeud)):
@@ -146,10 +277,16 @@ def get_sink_nodes(graph):
     return noeuds_sortie
 
 def get_contigs(graph, starting_nodes, ending_nodes):
+    """
+      :Parameters:
+          xxx:
+      Returns:
+
+    """
     contigs = []
     for n_entree in starting_nodes:
         for n_sortie in ending_nodes:
-            if nx.has_path(graph, n_entree, n_sortie)==True:
+            if nx.has_path(graph, n_entree, n_sortie) is True:
                 paths=nx.all_simple_paths(graph, n_entree, n_sortie)
                 for path in paths:
                     contig = "".join([noeud[0] for noeud in path[:-1]]+ [path[-1]])
@@ -158,6 +295,12 @@ def get_contigs(graph, starting_nodes, ending_nodes):
 
 
 def save_contigs(contigs_list, output_file):
+    """
+      :Parameters:
+          xxx:
+      Returns:
+
+    """
     with open(output_file, 'w+') as filout:
         for i in range(len(contigs_list)):
             filout.write('>contig_{} len={}\n'.format(i, contigs_list[i][1]))
@@ -172,7 +315,7 @@ def fill(text, width=80):
 
 def draw_graph(graph, graphimg_file):
     """Draw the graph
-    """                   
+    """
     fig, ax = plt.subplots()
     elarge = [(u, v) for (u, v, d) in graph.edges(data=True) if d['weight'] > 3]
     #print(elarge)
