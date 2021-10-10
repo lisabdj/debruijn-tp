@@ -25,13 +25,13 @@ random.seed(9001)
 from random import randint
 import statistics
 
-__author__ = "Your Name"
+__author__ = "BOUARROUDJ Lisa"
 __copyright__ = "Universite Paris Diderot"
-__credits__ = ["Your Name"]
+__credits__ = ["BOUARROUDJ Lisa"]
 __license__ = "GPL"
 __version__ = "1.0.0"
-__maintainer__ = "Your Name"
-__email__ = "your@email.fr"
+__maintainer__ = "BOUARROUDJ Lisa"
+__email__ = "lisa.bdj.95@gmail.com"
 __status__ = "Developpement"
 
 def isfile(path):
@@ -74,16 +74,15 @@ def read_fastq(fastq_file):
         while ligne != "":
             while ligne[0]== "@":
                 ligne = filin.readline()
-                yield ligne
+                yield ligne[:-1]
                 break
             ligne = filin.readline()
-    
 
 
 def cut_kmer(read, kmer_size):
-    for i in range(len(read)-kmer_size):
+    for i in range(len(read)-kmer_size+1):
         yield read[i:i+kmer_size]
-    
+
 
 
 def build_kmer_dict(fastq_file, kmer_size):
@@ -94,7 +93,7 @@ def build_kmer_dict(fastq_file, kmer_size):
         for kmer in kmers:
             list_kmer.append(kmer)
     dico_kmer = dict((x, list_kmer.count(x)) for x in set(list_kmer))
-    return(dico_kmer)
+    return dico_kmer
 
 
 
@@ -102,9 +101,9 @@ def build_graph(kmer_dict):
     G = nx.DiGraph()
     for kmer,weight in kmer_dict.items():
         G.add_edge(kmer[0:-1], kmer[1:], weight=weight)
-    return(G)
+    return G
 
-    
+
 
 def remove_paths(graph, path_list, delete_entry_node, delete_sink_node):
     pass
@@ -113,7 +112,7 @@ def std(data):
     pass
 
 
-def select_best_path(graph, path_list, path_length, weight_avg_list, 
+def select_best_path(graph, path_list, path_length, weight_avg_list,
                      delete_entry_node=False, delete_sink_node=False):
     pass
 
@@ -133,16 +132,38 @@ def solve_out_tips(graph, ending_nodes):
     pass
 
 def get_starting_nodes(graph):
-    pass
+    noeuds_entree = []
+    for noeud in graph.nodes():
+        if not list(graph.predecessors(noeud)):
+            noeuds_entree.append(noeud)
+    return noeuds_entree
 
 def get_sink_nodes(graph):
-    pass
+    noeuds_sortie = []
+    for noeud in graph.nodes():
+        if not list(graph.successors(noeud)):
+            noeuds_sortie.append(noeud)
+    return noeuds_sortie
 
 def get_contigs(graph, starting_nodes, ending_nodes):
-    pass
+    contigs = []
+    for n_entree in starting_nodes:
+        for n_sortie in ending_nodes:
+            if nx.has_path(graph, n_entree, n_sortie)==True:
+                paths=nx.all_simple_paths(graph, n_entree, n_sortie)
+                for path in paths:
+                    contig = "".join([noeud[0] for noeud in path[:-1]]+ [path[-1]])
+                    contigs.append((contig, len(contig)))
+    return contigs
+
 
 def save_contigs(contigs_list, output_file):
-    pass
+    with open(output_file, 'w+') as filout:
+        for i in range(len(contigs_list)):
+            filout.write('>contig_{} len={}\n'.format(i, contigs_list[i][1]))
+            filout.write(fill(contigs_list[i][0]))
+            filout.write('\n')
+    filout.close()
 
 
 def fill(text, width=80):
@@ -151,7 +172,7 @@ def fill(text, width=80):
 
 def draw_graph(graph, graphimg_file):
     """Draw the graph
-    """                                    
+    """                   
     fig, ax = plt.subplots()
     elarge = [(u, v) for (u, v, d) in graph.edges(data=True) if d['weight'] > 3]
     #print(elarge)
@@ -162,7 +183,7 @@ def draw_graph(graph, graphimg_file):
     pos = nx.random_layout(graph)
     nx.draw_networkx_nodes(graph, pos, node_size=6)
     nx.draw_networkx_edges(graph, pos, edgelist=elarge, width=6)
-    nx.draw_networkx_edges(graph, pos, edgelist=esmall, width=6, alpha=0.5, 
+    nx.draw_networkx_edges(graph, pos, edgelist=esmall, width=6, alpha=0.5,
                            edge_color='b', style='dashed')
     #nx.draw_networkx(graph, pos, node_size=10, with_labels=False)
     # save image
@@ -173,7 +194,7 @@ def save_graph(graph, graph_file):
     """Save the graph with pickle
     """
     with open(graph_file, "wt") as save:
-            pickle.dump(graph, save)
+        pickle.dump(graph, save)
 
 
 #==============================================================
@@ -193,7 +214,7 @@ def main():
     graph = build_graph(dico)
     draw_graph(graph, "graph.png")
     # Fonctions de dessin du graphe
-    # A decommenter si vous souhaitez visualiser un petit 
+    # A decommenter si vous souhaitez visualiser un petit
     # graphe
     # Plot the graph
     # if args.graphimg_file:
