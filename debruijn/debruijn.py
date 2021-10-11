@@ -98,7 +98,6 @@ def cut_kmer(read, kmer_size):
         yield read[i:i+kmer_size]
 
 
-
 def build_kmer_dict(fastq_file, kmer_size):
     """Construit un dictionnaire de k-mers avec le nombre d'occurrence.
       :Paramètres:
@@ -118,7 +117,6 @@ def build_kmer_dict(fastq_file, kmer_size):
     return dico_kmer
 
 
-
 def build_graph(kmer_dict):
     """Construit l'arbre de k-mers.
       :Paramètre:
@@ -132,7 +130,6 @@ def build_graph(kmer_dict):
         suffix = key[1:]
         graph.add_edge(prefix, suffix, weight = val)
     return graph
-
 
 
 def remove_paths(graph, path_list, delete_entry_node, delete_sink_node):
@@ -195,6 +192,7 @@ def select_best_path(graph, path_list, path_length, weight_avg_list,
                         delete_sink_node)
     return graph
 
+
 def path_average_weight(graph, path):
     """Calcul le poids moyen d'un chemin.
       :Paramètres:
@@ -208,6 +206,7 @@ def path_average_weight(graph, path):
         poids = poids + graph[noeud_1][noeud_2]["weight"]
     poids_moyen = poids / (len(path)-1)
     return poids_moyen
+
 
 def solve_bubble(graph, ancestor_node, descendant_node):
     """Supprime la bulle située entre deux noeuds.
@@ -226,6 +225,7 @@ def solve_bubble(graph, ancestor_node, descendant_node):
         path_length.append(len(path))
         weight_avg_list.append(path_average_weight(graph, path))
     return select_best_path(graph, path_list, path_length, weight_avg_list)
+
 
 def simplify_bubbles(graph):
     """Trouve toutes les bulles et les supprime.
@@ -276,6 +276,7 @@ def solve_entry_tips(graph, starting_nodes):
                                 delete_entry_node = True)
     return graph
 
+
 def solve_out_tips(graph, ending_nodes):
     """Trouve et supprime les pointes de sortie.
       :Paramètres:
@@ -301,6 +302,7 @@ def solve_out_tips(graph, ending_nodes):
                                 delete_sink_node = True)
     return graph
 
+
 def get_starting_nodes(graph):
     """Liste les noeuds d'entrée d'un graphe
       :Paramètre:
@@ -314,6 +316,7 @@ def get_starting_nodes(graph):
             noeuds_entree.append(noeud)
     return noeuds_entree
 
+
 def get_sink_nodes(graph):
     """Liste les noeuds de sortie d'un graphe
       :Paramètre:
@@ -326,6 +329,7 @@ def get_sink_nodes(graph):
         if not list(graph.successors(noeud)):
             noeuds_sortie.append(noeud)
     return noeuds_sortie
+
 
 def get_contigs(graph, starting_nodes, ending_nodes):
     """
@@ -362,6 +366,7 @@ def save_contigs(contigs_list, output_file):
 def fill(text, width=80):
     """Split text with a line return to respect fasta format"""
     return os.linesep.join(text[i:i+width] for i in range(0, len(text), width))
+
 
 def draw_graph(graph, graphimg_file):
     """Draw the graph
