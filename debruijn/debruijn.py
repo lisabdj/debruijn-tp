@@ -16,14 +16,15 @@
 import argparse
 import os
 import sys
+import statistics
+import random
+from random import randint
+from operator import itemgetter
 import networkx as nx
 import matplotlib
 import matplotlib.pyplot as plt
-from operator import itemgetter
-import random
 random.seed(9001)
-from random import randint
-import statistics
+
 
 __author__ = "BOUARROUDJ Lisa"
 __copyright__ = "Boudjii Corporation"
@@ -122,10 +123,10 @@ def build_graph(kmer_dict):
       Returns:
 
     """
-    G = nx.DiGraph()
+    graph = nx.DiGraph()
     for kmer,weight in kmer_dict.items():
-        G.add_edge(kmer[0:-1], kmer[1:], weight=weight)
-    return G
+        graph.add_edge(kmer[:-1], kmer[1:], weight=weight)
+    return graph
 
 
 
@@ -167,7 +168,18 @@ def select_best_path(graph, path_list, path_length, weight_avg_list,
       Returns:
 
     """
-    for i in range(len(path_list)):
+    if std(weight_avg_list) > 0:
+        max_poids = max(weight_avg_list)
+        i_max = weight_avg_list.index(max_poids)
+    elif std(path_length) > 0:
+        max_len = max(path_length)
+        i_max = path_length.index(max_len)
+    elif std(path_length) == 0:
+        i_max = randint(0, len(path_length))
+
+    path_list.pop(i_max)
+    graph = remove_paths(graph, path_list, delete_entry_node, delete_sink_node)
+    """for i in range(len(path_list)):
         for j in range(i, len(path_list)-1):
             poids_1 = weight_avg_list[i]
             poids_2 = weight_avg_list[j]
@@ -186,7 +198,7 @@ def select_best_path(graph, path_list, path_length, weight_avg_list,
                         graph.remove_paths(graph, path_list[i], delete_entry_node, delete_sink_node)
                 elif std([len_1, len_2]) == 0:
                     n = randint(i, j)
-                    graph.remove_paths(graph, path_list[n], delete_entry_node, delete_sink_node)
+                    graph.remove_paths(graph, path_list[n], delete_entry_node, delete_sink_node)"""
     return graph
 
 def path_average_weight(graph, path):
@@ -228,7 +240,15 @@ def simplify_bubbles(graph):
     for noeud in graph.nodes():
         if noeud in graph.nodes():
             liste_prede = list(graph.predecessors(noeud))
-            #if len(liste_prede) > 1:
+            if len(liste_prede) > 1:
+                for i in range(len(liste_prede)):
+                    for j in range(i+1, len(liste_prede)):
+                        noeud_ancetre = nx.lowest_common_ancestor(graph, liste_prede[i], liste_prede[j])
+                        if noeud_ancetre is not None:
+                            bubble = True
+                            break
+    if bubble:
+        graph = simplify_bubbles(solve_bubble(graph, noeud_ancetre, noeud))
     return graph
 
 
@@ -239,7 +259,7 @@ def solve_entry_tips(graph, starting_nodes):
       Returns:
 
     """
-    pass
+    return graph
 
 def solve_out_tips(graph, ending_nodes):
     """
@@ -248,7 +268,7 @@ def solve_out_tips(graph, ending_nodes):
       Returns:
 
     """
-    pass
+    return graph
 
 def get_starting_nodes(graph):
     """
@@ -302,10 +322,9 @@ def save_contigs(contigs_list, output_file):
 
     """
     with open(output_file, 'w+') as filout:
-        for i in range(len(contigs_list)):
-            filout.write('>contig_{} len={}\n'.format(i, contigs_list[i][1]))
-            filout.write(fill(contigs_list[i][0]))
-            filout.write('\n')
+        for i, contig in enumerate(contigs_list):
+            filout.write('>contig_{} len={}\n'.format(i, contig[1]))
+            filout.write(fill(contig[0]) + '\n')
     filout.close()
 
 
